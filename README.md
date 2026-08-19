@@ -24,6 +24,7 @@ Demostrar un flujo completo de **Machine Learning + Data Engineering + DevOps** 
 - **GitHub Actions** para integración y entrega continua (sin Docker).
 
 ## 📁 Estructura del proyecto
+```text
 ├── .github/workflows/ci.yml # Pipeline CI/CD
 ├── app/
 │ └── main.py # API FastAPI
@@ -40,7 +41,7 @@ Demostrar un flujo completo de **Machine Learning + Data Engineering + DevOps** 
 │ └── test_prediction.py # Tests de predicción con datos de prueba
 ├── requirements.txt
 └── README.md
-
+```
 
 ## ⚙️ Requisitos
 
