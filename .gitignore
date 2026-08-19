@@ -1,0 +1,63 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Cache de pytest
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Modelos y artefactos generados ---
+# Modelo entrenado (se genera en CI)
+models/
+# Cualquier artefacto de Spark
+metastore_db/
+spark-warehouse/
+derby.log
+
+# --- Logs ---
+*.log
+logs/
+*.out
+
+# --- Datos generados o temporales ---
+# (Los datos originales iris.csv y test_data.csv SÍ se suben)
+data/raw/
+data/processed/
+*.tmp
+*.temp
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Archivos de configuración y entorno ---
+.env
+.env.*
+config.local.*
+*.local
+
+# --- Archivos de IDE y editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+desktop.ini
