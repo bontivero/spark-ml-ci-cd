@@ -23,6 +23,19 @@ Demostrar un flujo completo de **Machine Learning + Data Engineering + DevOps** 
 - **FastAPI** para servir el modelo como API.
 - **GitHub Actions** para integración y entrega continua (sin Docker).
 
+## Evaluación del modelo
+
+El modelo se evalúa sobre un conjunto de prueba (20% de los datos) y se calculan las siguientes métricas:
+
+- **Accuracy**: porcentaje de predicciones correctas.
+- **Precisión ponderada (Weighted Precision)**: media de la precisión de cada clase ponderada por el número de muestras.
+- **Recall ponderado (Weighted Recall)**: media del recall de cada clase ponderada.
+- **F1-score ponderado**: media armónica de precisión y recall.
+
+Además, se genera una **matriz de confusión** que muestra cuántas muestras de cada clase real fueron predichas en cada clase. La diagonal principal representa los aciertos; los elementos fuera de ella son errores.
+
+En MLflow se guardan las métricas, la matriz y el modelo entrenado para su trazabilidad.
+
 ## 📁 Estructura del proyecto
 ```text
 ├── .github/workflows/ci.yml # Pipeline CI/CD

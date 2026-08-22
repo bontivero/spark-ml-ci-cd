@@ -61,3 +61,7 @@ config.local.*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# --- MLflow ---
+mlruns/
+mlflow.db
