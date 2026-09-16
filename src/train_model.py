@@ -28,9 +28,9 @@ def get_model(model_type, maxIter=10, regParam=0.0, maxDepth=5, numTrees=20):
     else:
         raise ValueError(f"Modelo no soportado: {model_type}")
 
-
-def train_and_evaluate(spark, data_path="data/iris.csv", model_output=None, 
+def train_and_evaluate(spark, data_path="data/iris.csv", model_output=None,
                     model_type="logistic", maxIter=10, regParam=0.0, maxDepth=5, numTrees=20):
+
     """Entrena un modelo, evalúa con métricas y registra en MLflow."""
     os.environ["PYSPARK_PYTHON"] = sys.executable
     os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
