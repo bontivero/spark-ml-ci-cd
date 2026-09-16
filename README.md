@@ -1,6 +1,6 @@
-# Clasificador de Flores Iris con PySpark ML y CI/CD
+# Clasificador de Flores Iris con PySpark ML, MLflow y CI/CD
 
-![CI/CD Pipeline](https://github.com/tu-usuario/spark-ml-ci-cd-sin-docker/actions/workflows/ci.yml/badge.svg)
+[![CI/CD Pipeline](https://github.com/bontivero/spark-ml-ci-cd/actions/workflows/ci.yml/badge.svg)](https://github.com/bontivero/spark-ml-ci-cd/actions/workflows/ci.yml)
 
 ## 📖 Descripción
 
@@ -10,8 +10,10 @@ Este proyecto implementa un **clasificador de flores Iris** utilizando **PySpark
 - **Entrenamiento** del modelo con Spark ML.
 - **Evaluación** de precisión sobre un conjunto de prueba.
 - **Predicción** en tiempo real mediante una API.
+- **Gestión de experimentos** con MLflow (métricas, artefactos y versionado de modelos).
 - **Tests automáticos** con pytest.
-- **CI/CD con GitHub Actions**: cada push a `main` ejecuta tests, entrena el modelo y sube el artefacto resultante.
+- **Lint con Ruff** para calidad de código.
+- **CI/CD con GitHub Actions**: cada push a `main` ejecuta lint y tests, entrena el modelo y publica la imagen Docker en GitHub Container Registry.
 
 El dataset Iris es un clásico en machine learning: contiene 150 muestras de 3 especies de flores (setosa, versicolor, virginica) con 4 características numéricas (longitud/ancho de sépalo y pétalo).
 
@@ -21,7 +23,8 @@ Demostrar un flujo completo de **Machine Learning + Data Engineering + DevOps** 
 
 - **PySpark** para procesamiento distribuido y ML.
 - **FastAPI** para servir el modelo como API.
-- **GitHub Actions** para integración y entrega continua (sin Docker).
+- **GitHub Actions** para integración y entrega continua, con publicación de imágenes en GitHub Container Registry.
+- **MLflow** para trazabilidad de experimentos y modelos.
 
 ## Evaluación del modelo
 
@@ -38,20 +41,29 @@ En MLflow se guardan las métricas, la matriz y el modelo entrenado para su traz
 
 ## 📁 Estructura del proyecto
 ```text
-├── .github/workflows/ci.yml # Pipeline CI/CD
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml                 # Pipeline CI/CD
+│   │   └── codeql.yml             # Análisis de seguridad
+│   └── dependabot.yml             # Actualización automática de dependencias
 ├── app/
-│ └── main.py # API FastAPI
+│   └── main.py                    # API FastAPI
 ├── data/
-│ ├── iris.csv # Dataset completo (150 filas)
-│ └── test_data.csv # Datos de prueba para validación
+│   ├── iris.csv                   # Dataset completo (150 filas)
+│   └── test_data.csv              # Datos de prueba para validación
 ├── src/
-│ ├── data_preprocessing.py # Carga y transformación de datos
-│ ├── train_model.py # Entrenamiento del modelo
-│ └── predict.py # Funciones de predicción
+│   ├── data_preprocessing.py      # Carga y transformación de datos
+│   ├── train_model.py             # Entrenamiento del modelo
+│   └── predict.py                 # Funciones de predicción
 ├── tests/
-│ ├── test_preprocessing.py # Tests de preprocesamiento
-│ ├── test_training.py # Tests de entrenamiento
-│ └── test_prediction.py # Tests de predicción con datos de prueba
+│   ├── test_preprocessing.py
+│   ├── test_training.py
+│   └── test_prediction.py
+├── Dockerfile                     # Imagen Docker de la API
+├── .dockerignore                  # Archivos excluidos del build
+├── pyproject.toml                 # Configuración de Ruff
+├── run_experiments.py             # Ejecutor de múltiples experimentos
+├── check_mlflow.py                # Utilidad para inspeccionar MLflow
 ├── requirements.txt
 └── README.md
 ```
@@ -118,20 +130,85 @@ Los tests validan:
   - Precisión del modelo >= 90%.
   - Predicciones correctas sobre datos de prueba (data/test_data.csv).
 
+## 📊 Gestión de experimentos con MLflow
+
+Los experimentos se registran en una base de datos SQLite local (`mlflow.db`) bajo el experimento `iris_classification`. Para cada run se guardan:
+
+- **Parámetros**: tipo de modelo, hiperparámetros (`maxIter`, `regParam`, `numTrees`, `maxDepth`).
+- **Métricas**: accuracy, weighted precision, weighted recall, F1 y métricas por clase.
+- **Artefactos**: matriz de confusión (`confusion_matrix.npy`) y el modelo entrenado.
+
+### Ejecutar múltiples experimentos
+
+El script `run_experiments.py` lanza varias configuraciones de los tres algoritmos:
+
+```bash
+python run_experiments.py
+```
+
+Visualizar resultados
+```bash
+mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+
 ## 🔄 CI/CD con GitHub Actions
 
-El pipeline definido en .github/workflows/ci.yml se ejecuta automáticamente:
-  - En cada push a main o pull request: se instalan dependencias y se ejecutan los tests.
-  - Solo en push a main (si los tests pasan): se entrena el modelo y se sube el artefacto iris-model (carpeta models/) a GitHub Actions.
+El pipeline definido en [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta automáticamente y consta de dos jobs: **test** y **build-and-push**.
 
-Puedes descargar el artefacto desde la pestaña Actions → selecciona el run → Artifacts.
+### Características del pipeline
+
+- **Control de concurrencia**: si se hace un nuevo push a la misma rama mientras un workflow está en curso, el anterior se cancela automáticamente.
+- **Timeouts**: cada job tiene un límite de tiempo (15 min para tests, 30 min para build) para evitar ejecuciones colgadas.
+- **Cache de pip**: las dependencias de Python se cachean entre ejecuciones para acelerar la instalación.
+- **Lint con Ruff**: se verifica la calidad y el estilo del código antes de ejecutar los tests.
+
+### Job `test`
+
+Se ejecuta en cada **push a `main`** y en cada **pull request** hacia `main`:
+
+1. Configura Java 11 y Python 3.12.
+2. Instala dependencias con cache de pip.
+3. Ejecuta **Ruff** para verificar la calidad del código.
+4. Ejecuta los **tests** con pytest.
+
+### Job `build-and-push`
+
+Se ejecuta **solo en push a `main`** y **solo si el job `test` pasa**:
+
+1. Configura Java 11 y Python 3.12 (con cache de pip).
+2. Entrena el modelo (`python -m src.train_model`), generando la carpeta `models/`.
+3. Configura Docker Buildx.
+4. Hace login en **GitHub Container Registry (GHCR)** usando `docker/login-action`.
+5. Extrae los tags y labels con `docker/metadata-action`.
+6. Construye y sube la imagen Docker con `docker/build-push-action`, usando cache de capas con GitHub Actions.
+
+### Imágenes publicadas
+
+Las imágenes se publican en GHCR con las siguientes etiquetas:
+
+- `ghcr.io/tu-usuario/spark-ml-ci-cd:latest` → última build de `main`.
+- `ghcr.io/tu-usuario/spark-ml-ci-cd:main` → build de la rama `main`.
+- `ghcr.io/tu-usuario/spark-ml-ci-cd:sha-<commit>` → build asociada a un commit específico.
+
+Puedes descargar y ejecutar la imagen localmente:
+
+```bash
+docker pull ghcr.io/tu-usuario/spark-ml-ci-cd:latest
+docker run -p 8000:8000 ghcr.io/tu-usuario/spark-ml-ci-cd:latest
+```
 
 ## 🧠 Tecnologías utilizadas
-  - Apache Spark / PySpark
-  - FastAPI
-  - pytest
-  - GitHub Actions
-  - Python 3.10
+
+- **Apache Spark / PySpark** — procesamiento distribuido y MLlib.
+- **MLflow** — tracking de experimentos y versionado de modelos.
+- **FastAPI** — API REST para servir el modelo.
+- **Uvicorn** — servidor ASGI.
+- **pytest** — tests automatizados.
+- **Ruff** — linting y calidad de código.
+- **Docker** — contenedor de la API.
+- **GitHub Actions** — CI/CD, CodeQL y Dependabot.
+- **GitHub Container Registry (GHCR)** — registro de imágenes Docker.
+- **Python 3.12** — versión usada en CI/CD.
 
 ## 📄 Licencia
 
