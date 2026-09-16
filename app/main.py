@@ -1,10 +1,12 @@
+import os
+import sys
+
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from pyspark.sql import SparkSession
-import uvicorn
+
 from src.predict import load_model, predict_single
-import os
-import sys
 
 # Configurar el Python que usarán Spark y sus workers
 os.environ["PYSPARK_PYTHON"] = sys.executable
@@ -32,13 +34,15 @@ def predict(features: IrisFeatures):
             features.sepal_length,
             features.sepal_width,
             features.petal_length,
-            features.petal_width
+            features.petal_width,
         ]
         pred = predict_single(model, input_list)
         species_map = {0: "setosa", 1: "versicolor", 2: "virginica"}
         return {"prediction": pred, "species": species_map[pred]}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Se captura cualquier excepción para devolver un error HTTP 500 controlado
+        # al cliente en lugar de exponer un stacktrace interno.
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

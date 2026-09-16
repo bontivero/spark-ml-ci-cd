@@ -1,6 +1,7 @@
-from pyspark.sql import SparkSession
-from pyspark.ml.feature import StringIndexer, VectorAssembler
 from pyspark.ml import Pipeline
+from pyspark.ml.feature import StringIndexer, VectorAssembler
+from pyspark.sql import SparkSession
+
 
 def create_spark_session(app_name="IrisPreprocessing"):
     return SparkSession.builder \

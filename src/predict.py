@@ -1,6 +1,6 @@
 from pyspark.ml.classification import LogisticRegressionModel
 from pyspark.ml.linalg import Vectors
-from pyspark.sql import SparkSession
+
 
 def load_model(spark, model_path="models/iris_model"):
     return LogisticRegressionModel.load(model_path)

@@ -1,5 +1,4 @@
 import subprocess
-import sys
 
 # Configuraciones de experimentos a ejecutar
 configs = [
@@ -26,7 +25,7 @@ for cfg in configs:
 
     print(f"\n=== Ejecutando: {' '.join(cmd)} ===")
     # Ejecutar y esperar a que termine
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
     # Mostrar salida estándar
     if result.stdout:

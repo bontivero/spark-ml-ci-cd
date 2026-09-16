@@ -1,6 +1,8 @@
 import pytest
 from pyspark.sql import SparkSession
+
 from src.data_preprocessing import load_data, preprocess_data
+
 
 @pytest.fixture(scope="session")
 def spark():

@@ -1,14 +1,19 @@
 import os
 import sys
+import time
+from argparse import ArgumentParser
+
 import mlflow
 import mlflow.spark
-import time
 import numpy as np
-import pandas as pd
 import pyspark
-from argparse import ArgumentParser
-from pyspark.ml.classification import LogisticRegression, RandomForestClassifier, DecisionTreeClassifier
+from pyspark.ml.classification import (
+    DecisionTreeClassifier,
+    LogisticRegression,
+    RandomForestClassifier,
+)
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+
 from src.data_preprocessing import create_spark_session, load_data, preprocess_data
 
 
@@ -37,7 +42,7 @@ def train_and_evaluate(spark, data_path="data/iris.csv", model_output=None,
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         model_output = f"models/iris_model_{model_type}_{timestamp}"
 
-    with mlflow.start_run() as run:
+    with mlflow.start_run():
         df = load_data(spark, data_path)
         transformed_df = preprocess_data(df)
 

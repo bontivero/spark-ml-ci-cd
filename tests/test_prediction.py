@@ -1,7 +1,9 @@
 import pytest
 from pyspark.sql import SparkSession
-from src.train_model import train_and_evaluate
+
 from src.predict import load_model, predict_single
+from src.train_model import train_and_evaluate
+
 
 @pytest.fixture(scope="session")
 def spark():

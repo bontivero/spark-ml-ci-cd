@@ -8,3 +8,4 @@ setuptools==75.6.0
 mlflow==3.15.1
 pandas==2.3.3
 argparse==1.4.0
+ruff==0.16.7
